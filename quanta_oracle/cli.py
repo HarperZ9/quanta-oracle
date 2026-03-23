@@ -170,6 +170,43 @@ def _cmd_forecast(args: argparse.Namespace) -> None:
             print(f"    t+{idx:3d}: {v:.4f}")
         return
 
+    # ---- Multivariate (VAR) path ----------------------------------------
+    if getattr(args, "multivariate", False):
+        import numpy as np
+
+        horizon = args.horizon
+
+        # Generate a 2-column sample series
+        series1 = generate_sample_series(n=365, trend=0.01, noise=0.1)
+        series2 = generate_sample_series(n=365, trend=0.02, noise=0.15,
+                                          changepoints=1)
+        data = np.column_stack([series1, series2])
+        print(f"  Data source : multivariate sample ({data.shape[0]} x {data.shape[1]})")
+        print(f"  Model       : VAR")
+        print(f"  Horizon     : {horizon} steps")
+        print()
+
+        from quanta_oracle.var import VAR as VARModel
+        model = VARModel(p=2)
+        model.fit(data)
+        forecast = model.predict(horizon)
+
+        if args.save:
+            model.save(args.save)
+            print(f"  Model saved to: {args.save}")
+            print()
+
+        print("  --- Forecast (first 5 / last 5) — Variable 1 ---")
+        fc = forecast[:, 0].tolist()
+        for i, v in enumerate(fc[:5]):
+            print(f"    t+{i+1:3d}: {v:.4f}")
+        if len(fc) > 10:
+            print(f"    {'...':>8}")
+        for i, v in enumerate(fc[-5:]):
+            idx = len(fc) - 5 + i + 1
+            print(f"    t+{idx:3d}: {v:.4f}")
+        return
+
     # ---- Normal fit-and-forecast path ----------------------------------
     # Load data
     if args.data == "sample":
@@ -512,6 +549,8 @@ def main(argv: Optional[list[str]] = None) -> None:
                        help="Save fitted model to PATH after training")
     p_fc.add_argument("--load", default=None, metavar="PATH",
                        help="Load a saved model from PATH instead of fitting")
+    p_fc.add_argument("--multivariate", action="store_true", default=False,
+                       help="Use VAR model on a 2-column sample series")
 
     # decompose
     p_dc = sub.add_parser("decompose", help="Decompose time series")

@@ -132,6 +132,8 @@ class Prophet:
         self._changepoints: np.ndarray = np.array([])
         self._deltas: np.ndarray = np.array([])
         self._seasonal_coeffs: Optional[np.ndarray] = None
+        self._regressor_coeffs: Optional[np.ndarray] = None
+        self._n_regressors: int = 0
         self._residual_std: float = 0.0
         self._t_train: Optional[np.ndarray] = None
         self._y_train: Optional[np.ndarray] = None
@@ -144,6 +146,7 @@ class Prophet:
         self,
         timestamps: ArrayLike,
         values: ArrayLike,
+        regressors: Optional[np.ndarray] = None,
     ) -> "Prophet":
         """Fit the Prophet model.
 
@@ -153,6 +156,10 @@ class Prophet:
             Numeric time indices (e.g. days since epoch, or simply 0..n-1).
         values : array-like of float
             Observed time series values.
+        regressors : (T, R) array, optional
+            External regressor matrix with R regressor columns aligned to
+            the timestamps.  When provided, regressor coefficients are
+            estimated and included in the forecast.
 
         Returns
         -------
@@ -168,6 +175,20 @@ class Prophet:
 
         self._t_train = t.copy()
         self._y_train = y.copy()
+
+        # Validate regressors
+        if regressors is not None:
+            regressors = np.asarray(regressors, dtype=np.float64)
+            if regressors.ndim == 1:
+                regressors = regressors.reshape(-1, 1)
+            if regressors.shape[0] != n:
+                raise ValueError(
+                    f"regressors rows ({regressors.shape[0]}) must match "
+                    f"timestamps length ({n})"
+                )
+            self._n_regressors = regressors.shape[1]
+        else:
+            self._n_regressors = 0
 
         # --- Step 1: Place changepoints in the first 80% of the series ---
         cp_range = int(0.8 * n)
@@ -220,8 +241,19 @@ class Prophet:
             self._seasonal_coeffs = None
             seasonal_fitted = np.zeros(n)
 
+        # --- Step 4: Fit external regressor coefficients ------------------
+        if regressors is not None and self._n_regressors > 0:
+            residual_for_regressors = y - trend_fitted - seasonal_fitted
+            self._regressor_coeffs, _, _, _ = np.linalg.lstsq(
+                regressors, residual_for_regressors, rcond=None
+            )
+            regressor_fitted = regressors @ self._regressor_coeffs
+        else:
+            self._regressor_coeffs = None
+            regressor_fitted = np.zeros(n)
+
         # Residual standard deviation (for uncertainty intervals)
-        residual = y - trend_fitted - seasonal_fitted
+        residual = y - trend_fitted - seasonal_fitted - regressor_fitted
         self._residual_std = float(np.std(residual))
 
         self._fitted = True
@@ -231,8 +263,20 @@ class Prophet:
     # Prediction
     # ------------------------------------------------------------------
 
-    def predict(self, future_timestamps: ArrayLike) -> dict:
+    def predict(
+        self,
+        future_timestamps: ArrayLike,
+        regressors: Optional[np.ndarray] = None,
+    ) -> dict:
         """Generate forecasts for *future_timestamps*.
+
+        Parameters
+        ----------
+        future_timestamps : array-like of float
+            Numeric time indices to forecast.
+        regressors : (N, R) array, optional
+            External regressor values for the future timestamps.  Must have
+            the same number of regressor columns as used during fitting.
 
         Returns
         -------
@@ -240,6 +284,7 @@ class Prophet:
             ``yhat``       — point forecast
             ``trend``      — trend component
             ``seasonal``   — seasonal component
+            ``regressors`` — regressor component (zeros if none)
             ``yhat_lower`` — lower 95% interval
             ``yhat_upper`` — upper 95% interval
         """
@@ -276,13 +321,33 @@ class Prophet:
         else:
             seasonal = np.zeros(n)
 
-        yhat = trend + seasonal
+        # External regressors
+        regressor_component = np.zeros(n)
+        if self._regressor_coeffs is not None and self._n_regressors > 0:
+            if regressors is not None:
+                regressors = np.asarray(regressors, dtype=np.float64)
+                if regressors.ndim == 1:
+                    regressors = regressors.reshape(-1, 1)
+                if regressors.shape[0] != n:
+                    raise ValueError(
+                        f"regressors rows ({regressors.shape[0]}) must match "
+                        f"future_timestamps length ({n})"
+                    )
+                if regressors.shape[1] != self._n_regressors:
+                    raise ValueError(
+                        f"Expected {self._n_regressors} regressor columns, "
+                        f"got {regressors.shape[1]}"
+                    )
+                regressor_component = regressors @ self._regressor_coeffs
+
+        yhat = trend + seasonal + regressor_component
         margin = 1.96 * self._residual_std
 
         return {
             "yhat": yhat,
             "trend": trend,
             "seasonal": seasonal,
+            "regressors": regressor_component,
             "yhat_lower": yhat - margin,
             "yhat_upper": yhat + margin,
         }
@@ -312,6 +377,12 @@ class Prophet:
                 if self._seasonal_coeffs is not None
                 else None
             ),
+            "regressor_coeffs": (
+                self._regressor_coeffs.tolist()
+                if self._regressor_coeffs is not None
+                else None
+            ),
+            "n_regressors": self._n_regressors,
             "residual_std": self._residual_std,
         }
 
@@ -339,6 +410,13 @@ class Prophet:
             if state["seasonal_coeffs"] is not None
             else None
         )
+        regressor_coeffs = state.get("regressor_coeffs")
+        obj._regressor_coeffs = (
+            np.array(regressor_coeffs, dtype=np.float64)
+            if regressor_coeffs is not None
+            else None
+        )
+        obj._n_regressors = int(state.get("n_regressors", 0))
         obj._residual_std = float(state["residual_std"])
         obj._fitted = True
         return obj

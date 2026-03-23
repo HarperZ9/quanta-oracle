@@ -256,14 +256,16 @@ class LSTMCell:
 # ---------------------------------------------------------------------------
 
 class SimpleForecaster:
-    """Two-layer MLP for univariate time series forecasting.
+    """Two-layer MLP for univariate or multivariate time series forecasting.
 
     Takes a lookback window of past values and produces *horizon*
-    future predictions.
+    future predictions.  When the input series is 2-D (T, K), the
+    input layer size is ``lookback * K`` and the output remains
+    univariate (predicting the first column by default).
 
     Architecture::
 
-        Input(lookback) -> Linear -> ReLU -> Linear -> Output(horizon)
+        Input(lookback * n_vars) -> Linear -> ReLU -> Linear -> Output(horizon)
 
     Parameters
     ----------
@@ -273,14 +275,19 @@ class SimpleForecaster:
         Number of future steps to forecast.
     hidden : int
         Width of the hidden layer.
+    n_vars : int
+        Number of input variables.  1 = univariate (default).
     """
 
-    def __init__(self, lookback: int = 20, horizon: int = 5, hidden: int = 64):
+    def __init__(self, lookback: int = 20, horizon: int = 5, hidden: int = 64,
+                 n_vars: int = 1):
         self.lookback = lookback
         self.horizon = horizon
         self.hidden = hidden
+        self.n_vars = n_vars
 
-        self.layer1 = Linear(lookback, hidden)
+        input_size = lookback * n_vars
+        self.layer1 = Linear(input_size, hidden)
         self.relu = ReLU()
         self.layer2 = Linear(hidden, horizon)
 
@@ -319,16 +326,20 @@ class SimpleForecaster:
         epochs: int = 100,
         lr: float = 0.001,
     ) -> list[float]:
-        """Train the forecaster on a univariate time series.
+        """Train the forecaster on a univariate or multivariate time series.
 
         Creates sliding windows of length ``lookback + horizon`` from
         *series*, normalizes them to zero-mean / unit-variance, and runs
         mini-batch SGD (full-batch per epoch) with back-propagation.
 
+        For multivariate input (T, K), the target is the first column and
+        each input window is flattened to ``lookback * K`` features.
+
         Parameters
         ----------
-        series : 1-D array
-            Training time series (length must be >= lookback + horizon + 1).
+        series : 1-D or 2-D array
+            Training time series.  Shape (T,) for univariate or (T, K) for
+            multivariate.  Length T must be >= lookback + horizon + 1.
         epochs : int
             Number of training iterations over the full dataset.
         lr : float
@@ -339,30 +350,53 @@ class SimpleForecaster:
         list[float]
             MSE loss recorded at every epoch.
         """
-        series = np.asarray(series, dtype=np.float64).ravel()
+        series = np.asarray(series, dtype=np.float64)
+        multivariate = series.ndim == 2
+
+        if multivariate:
+            if series.shape[1] != self.n_vars:
+                raise ValueError(
+                    f"Expected {self.n_vars} variables, got {series.shape[1]}"
+                )
+            T = series.shape[0]
+            # Target is the first column
+            target_col = series[:, 0]
+        else:
+            series = series.ravel()
+            T = len(series)
+            target_col = series
 
         min_len = self.lookback + self.horizon + 1
-        if len(series) < min_len:
+        if T < min_len:
             raise ValueError(
-                f"Series length ({len(series)}) must be >= "
+                f"Series length ({T}) must be >= "
                 f"lookback + horizon + 1 ({min_len})"
             )
 
-        # Compute and store normalization statistics
-        self._train_mean = float(np.mean(series))
-        self._train_std = float(np.std(series))
+        # Compute and store normalization statistics (based on target column)
+        self._train_mean = float(np.mean(target_col))
+        self._train_std = float(np.std(target_col))
         if self._train_std == 0:
             self._train_std = 1.0
 
-        normed = (series - self._train_mean) / self._train_std
+        if multivariate:
+            normed = (series - np.mean(series, axis=0)) / (np.std(series, axis=0) + 1e-8)
+            normed_target = (target_col - self._train_mean) / self._train_std
+        else:
+            normed = (series - self._train_mean) / self._train_std
+            normed_target = normed
 
         # Build sliding windows ------------------------------------------------
-        n_windows = len(normed) - self.lookback - self.horizon + 1
-        X = np.zeros((n_windows, self.lookback))
+        n_windows = T - self.lookback - self.horizon + 1
+        input_size = self.lookback * self.n_vars
+        X = np.zeros((n_windows, input_size))
         Y = np.zeros((n_windows, self.horizon))
         for i in range(n_windows):
-            X[i] = normed[i : i + self.lookback]
-            Y[i] = normed[i + self.lookback : i + self.lookback + self.horizon]
+            if multivariate:
+                X[i] = normed[i: i + self.lookback].ravel()
+            else:
+                X[i] = normed[i: i + self.lookback]
+            Y[i] = normed_target[i + self.lookback: i + self.lookback + self.horizon]
 
         # Training loop --------------------------------------------------------
         loss_history: list[float] = []
@@ -424,24 +458,37 @@ class SimpleForecaster:
 
         Parameters
         ----------
-        series : (>= lookback,) 1-D array
+        series : 1-D array (>= lookback,) for univariate, or
+                 2-D array (>= lookback, K) for multivariate.
 
         Returns
         -------
-        (horizon,) array of predictions.
+        (horizon,) array of predictions (first variable for multivariate).
         """
-        series = np.asarray(series, dtype=np.float64).ravel()
-        if len(series) < self.lookback:
-            raise ValueError(
-                f"Series length ({len(series)}) must be >= lookback ({self.lookback})"
-            )
-        window = series[-self.lookback:]
+        series = np.asarray(series, dtype=np.float64)
+        multivariate = series.ndim == 2
 
-        if self._trained:
-            window = (window - self._train_mean) / self._train_std
+        if multivariate:
+            if series.shape[0] < self.lookback:
+                raise ValueError(
+                    f"Series length ({series.shape[0]}) must be >= lookback ({self.lookback})"
+                )
+            window = series[-self.lookback:]  # (lookback, K)
+            if self._trained:
+                window = (window - np.mean(series, axis=0)) / (np.std(series, axis=0) + 1e-8)
+            window_flat = window.ravel()  # (lookback * K,)
+        else:
+            series = series.ravel()
+            if len(series) < self.lookback:
+                raise ValueError(
+                    f"Series length ({len(series)}) must be >= lookback ({self.lookback})"
+                )
+            window_flat = series[-self.lookback:]
+            if self._trained:
+                window_flat = (window_flat - self._train_mean) / self._train_std
 
-        # Reshape to (1, lookback) for the forward pass then squeeze back
-        z = self._forward(window.reshape(1, -1)).ravel()
+        # Reshape to (1, input_size) for the forward pass then squeeze back
+        z = self._forward(window_flat.reshape(1, -1)).ravel()
 
         if self._trained:
             z = z * self._train_std + self._train_mean
@@ -459,6 +506,7 @@ class SimpleForecaster:
             "lookback": self.lookback,
             "horizon": self.horizon,
             "hidden": self.hidden,
+            "n_vars": self.n_vars,
             "layer1_W": self.layer1.W.tolist(),
             "layer1_b": self.layer1.b.tolist(),
             "layer2_W": self.layer2.W.tolist(),
@@ -479,6 +527,7 @@ class SimpleForecaster:
             lookback=state["lookback"],
             horizon=state["horizon"],
             hidden=state["hidden"],
+            n_vars=state.get("n_vars", 1),
         )
         obj.layer1.W = np.array(state["layer1_W"], dtype=np.float64)
         obj.layer1.b = np.array(state["layer1_b"], dtype=np.float64)
