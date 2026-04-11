@@ -14,14 +14,14 @@ Strategies:
 
 from __future__ import annotations
 
-import numpy as np
-from typing import Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 
+import numpy as np
+
 from quanta_oracle.arima import ARIMA
-from quanta_oracle.prophet import Prophet
 from quanta_oracle.neural import SimpleForecaster
+from quanta_oracle.prophet import Prophet
 
 
 @dataclass
@@ -79,12 +79,12 @@ class StreamForecaster:
         self._fitted = False
         self._update_count = 0
         self._models: dict[str, object] = {}
-        self._last_prediction: Optional[float] = None
+        self._last_prediction: float | None = None
         self._refit_count = 0
 
     def observe(
         self, value: float, timestamp: datetime = None,
-    ) -> Optional[StreamUpdate]:
+    ) -> StreamUpdate | None:
         """
         Process a new observation. Returns StreamUpdate if enough
         history, None if still warming up.
@@ -145,7 +145,7 @@ class StreamForecaster:
         for name in self._models:
             try:
                 self._predictions[name] = self._predict_single(name, horizon)
-            except Exception:
+            except (ValueError, KeyError):
                 self._predictions[name] = next_preds.copy()
 
         # Compute confidence from recent error trend
@@ -192,7 +192,7 @@ class StreamForecaster:
                     )
                     model.fit(data, epochs=cfg.neural_epochs, lr=cfg.neural_lr)
                     self._models["neural"] = model
-            except Exception:
+            except (ValueError, np.linalg.LinAlgError, RuntimeError):
                 # Model failed to fit, skip it
                 pass
 
@@ -215,8 +215,7 @@ class StreamForecaster:
                     # the state with the new observation
                     model = self._models[name]
                     model._series = data.copy()
-                    from quanta_oracle.arima import _difference, _autocov
-                    from quanta_oracle.arima import _levinson_durbin
+                    from quanta_oracle.arima import _autocov, _difference, _levinson_durbin
                     z = _difference(data, model.d)
                     model._diff_series = z.copy()
                     model.intercept = float(np.mean(z))
@@ -298,7 +297,7 @@ class StreamForecaster:
                         model.layer1.W -= lr * model.layer1._dW
                         model.layer1.b -= lr * model.layer1._db
 
-            except Exception:
+            except (ValueError, np.linalg.LinAlgError, RuntimeError):
                 pass  # model update failed, keep previous state
 
     def _update_weights(self) -> None:
@@ -356,7 +355,7 @@ class StreamForecaster:
                     pred = np.pad(pred, (0, steps - len(pred)), mode="edge")
                 predictions.append(pred[:steps])
                 weights.append(self._weights.get(name, 0.0))
-            except Exception:
+            except (ValueError, KeyError):
                 continue
 
         if not predictions:

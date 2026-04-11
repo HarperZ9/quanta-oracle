@@ -2,9 +2,7 @@
 
 import numpy as np
 import pytest
-
 from quanta_oracle.ensemble import EnsembleConfig, EnsembleForecaster
-
 
 # ---------------------------------------------------------------------------
 # Helpers — synthetic data generators
@@ -190,7 +188,7 @@ class TestEnsembleQuality:
         """Ensemble MAE should not be dramatically worse than the best model."""
         data = _sine_wave(300)
         val_win = 20
-        train = data[:-val_win]
+        data[:-val_win]
         actual = data[-val_win:]
 
         ens = EnsembleForecaster()

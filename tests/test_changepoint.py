@@ -2,9 +2,7 @@
 
 import numpy as np
 import pytest
-
 from quanta_oracle.changepoint import confidence_scores, pelt, segment_cost
-
 
 # ---------------------------------------------------------------------------
 # Helpers

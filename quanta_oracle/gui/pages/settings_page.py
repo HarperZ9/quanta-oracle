@@ -4,13 +4,20 @@ Quanta Oracle -- Settings Page
 Default configuration, export directory, and about section.
 """
 
+from PyQt6.QtCore import QSettings, Qt
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QSpinBox, QScrollArea, QGridLayout, QFileDialog,
+    QComboBox,
+    QFileDialog,
+    QGridLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QSettings
 
-from quanta_oracle.gui.app import C, Card, Heading, Stat, APP_NAME, APP_VERSION, APP_ORG
+from quanta_oracle.gui.app import APP_NAME, APP_ORG, APP_VERSION, C, Card, Heading
 
 
 class SettingsPage(QWidget):

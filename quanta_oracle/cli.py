@@ -12,8 +12,6 @@ Commands:
 import argparse
 import math
 import sys
-from typing import Optional
-
 
 # =============================================================================
 # Sample Data Generation
@@ -185,7 +183,7 @@ def _cmd_forecast(args: argparse.Namespace) -> None:
                                           changepoints=1)
         data = np.column_stack([series1, series2])
         print(f"  Data source : multivariate sample ({data.shape[0]} x {data.shape[1]})")
-        print(f"  Model       : VAR")
+        print("  Model       : VAR")
         print(f"  Horizon     : {horizon} steps")
         print()
 
@@ -483,7 +481,7 @@ def _cmd_features(args: argparse.Namespace) -> None:
 
 def _skewness(arr) -> float:
     import numpy as np
-    n = len(arr)
+    len(arr)
     mean = np.mean(arr)
     std = np.std(arr)
     if std == 0:
@@ -539,7 +537,7 @@ def _cmd_gui(args: argparse.Namespace) -> None:
         from quanta_oracle.gui import launch
         sys.exit(launch())
     except ImportError as e:
-        print(f"  Error: GUI requires PyQt6.  pip install PyQt6")
+        print("  Error: GUI requires PyQt6.  pip install PyQt6")
         print(f"  ({e})")
         sys.exit(1)
 
@@ -548,7 +546,7 @@ def _cmd_gui(args: argparse.Namespace) -> None:
 # Entry Point
 # =============================================================================
 
-def main(argv: Optional[list[str]] = None) -> None:
+def main(argv: list[str] | None = None) -> None:
     """Parse arguments and dispatch to the appropriate command."""
     parser = argparse.ArgumentParser(
         prog="quanta-oracle",

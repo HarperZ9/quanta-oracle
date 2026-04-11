@@ -2,13 +2,11 @@
 
 import numpy as np
 import pytest
-
 from quanta_oracle.decompose import (
     classical_decompose,
     seasonal_strength,
     trend_strength,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

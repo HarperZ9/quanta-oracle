@@ -4,18 +4,26 @@ Quanta Oracle -- Changepoint Detection Page
 Detect structural breaks in time series with configurable penalties.
 """
 
-from typing import Optional
 
+from PyQt6.QtCore import QPointF, QRectF, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QSpinBox, QScrollArea, QSizePolicy, QGridLayout,
-    QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QAbstractItemView,
+    QComboBox,
+    QGridLayout,
+    QHeaderView,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpinBox,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QPen, QColor
 
-from quanta_oracle.gui.app import C, Card, Heading, Stat
-
+from quanta_oracle.gui.app import C, Card, Heading
 
 # =============================================================================
 # Changepoint Worker Thread
@@ -235,7 +243,7 @@ class ChangepointPage(QWidget):
     def __init__(self, main_window=None, parent=None):
         super().__init__(parent)
         self._main_window = main_window
-        self._worker: Optional[ChangepointWorker] = None
+        self._worker: ChangepointWorker | None = None
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)

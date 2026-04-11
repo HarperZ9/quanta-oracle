@@ -8,9 +8,9 @@ on recent data get higher weight in the ensemble prediction.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import numpy as np
-from typing import Optional
-from dataclasses import dataclass, field
 
 
 @dataclass
@@ -49,12 +49,12 @@ class EnsembleForecaster:
         self._model_names: list[str] = []
         self._model_mae: dict[str, float] = {}
         self._fitted = False
-        self._training_data: Optional[np.ndarray] = None
+        self._training_data: np.ndarray | None = None
         self._fit_count: int = 0
 
     # ----- Fitting --------------------------------------------------------
 
-    def fit(self, data: np.ndarray, periods: int = 1) -> "EnsembleForecaster":
+    def fit(self, data: np.ndarray, periods: int = 1) -> EnsembleForecaster:
         """Fit all sub-models on the training data.
 
         Parameters
@@ -123,7 +123,7 @@ class EnsembleForecaster:
             self._models["arima"] = model
             self._model_names.append("arima")
             self._model_mae["arima"] = error
-        except Exception:
+        except (ValueError, np.linalg.LinAlgError, RuntimeError):
             pass  # exclude failed model
 
     def _fit_prophet(
@@ -145,7 +145,7 @@ class EnsembleForecaster:
             self._models["prophet"] = model
             self._model_names.append("prophet")
             self._model_mae["prophet"] = error
-        except Exception:
+        except (ValueError, np.linalg.LinAlgError, RuntimeError):
             pass  # exclude failed model
 
     def _fit_neural(
@@ -184,7 +184,7 @@ class EnsembleForecaster:
             self._models["neural"] = model
             self._model_names.append("neural")
             self._model_mae["neural"] = error
-        except Exception:
+        except (ValueError, np.linalg.LinAlgError, RuntimeError):
             pass  # exclude failed model
 
     # ----- Prediction -----------------------------------------------------
@@ -221,7 +221,7 @@ class EnsembleForecaster:
                     pred = np.pad(pred, (0, steps - len(pred)), mode="edge")
                 predictions.append(pred[:steps])
                 active_weights.append(float(self._weights[i]))
-            except Exception:
+            except (ValueError, KeyError):
                 continue  # skip failed prediction
 
         if not predictions:

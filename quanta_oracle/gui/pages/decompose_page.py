@@ -4,17 +4,23 @@ Quanta Oracle -- Decompose Page
 Time series decomposition with trend, seasonal, and residual charts.
 """
 
-from typing import Optional
 
+from PyQt6.QtCore import QPointF, QRectF, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QSpinBox, QScrollArea, QSizePolicy, QGridLayout,
+    QComboBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QPen, QColor
 
 from quanta_oracle.gui.app import C, Card, Heading, Stat
-
 
 # =============================================================================
 # Decompose Worker Thread
@@ -205,7 +211,7 @@ class DecomposePage(QWidget):
     def __init__(self, main_window=None, parent=None):
         super().__init__(parent)
         self._main_window = main_window
-        self._worker: Optional[DecomposeWorker] = None
+        self._worker: DecomposeWorker | None = None
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)

@@ -9,7 +9,8 @@ functions propagate derivatives automatically via the chain rule.
 from __future__ import annotations
 
 import math
-from typing import Callable, Union
+from collections.abc import Callable
+from typing import Union
 
 import numpy as np
 
@@ -38,12 +39,12 @@ class Dual:
         self.deriv = float(derivative)
 
     @staticmethod
-    def variable(value: float) -> "Dual":
+    def variable(value: float) -> Dual:
         """Create a Dual that tracks its own derivative (d/dx x = 1)."""
         return Dual(value, 1.0)
 
     @staticmethod
-    def constant(value: float) -> "Dual":
+    def constant(value: float) -> Dual:
         """Create a Dual constant (derivative = 0)."""
         return Dual(value, 0.0)
 
@@ -51,22 +52,22 @@ class Dual:
     # Arithmetic operators
     # ------------------------------------------------------------------
 
-    def __add__(self, other: Numeric) -> "Dual":
+    def __add__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         return Dual(self.value + other.value, self.deriv + other.deriv)
 
-    def __radd__(self, other: Numeric) -> "Dual":
+    def __radd__(self, other: Numeric) -> Dual:
         return self.__add__(other)
 
-    def __sub__(self, other: Numeric) -> "Dual":
+    def __sub__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         return Dual(self.value - other.value, self.deriv - other.deriv)
 
-    def __rsub__(self, other: Numeric) -> "Dual":
+    def __rsub__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         return Dual(other.value - self.value, other.deriv - self.deriv)
 
-    def __mul__(self, other: Numeric) -> "Dual":
+    def __mul__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         # Product rule: (fg)' = f'g + fg'
         return Dual(
@@ -74,10 +75,10 @@ class Dual:
             self.deriv * other.value + self.value * other.deriv,
         )
 
-    def __rmul__(self, other: Numeric) -> "Dual":
+    def __rmul__(self, other: Numeric) -> Dual:
         return self.__mul__(other)
 
-    def __truediv__(self, other: Numeric) -> "Dual":
+    def __truediv__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         if other.value == 0:
             raise ZeroDivisionError("Division by zero in Dual arithmetic")
@@ -87,11 +88,11 @@ class Dual:
             (self.deriv * other.value - self.value * other.deriv) / (other.value ** 2),
         )
 
-    def __rtruediv__(self, other: Numeric) -> "Dual":
+    def __rtruediv__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         return other.__truediv__(self)
 
-    def __pow__(self, other: Numeric) -> "Dual":
+    def __pow__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         # f(x)^g(x) = exp(g * ln(f))
         # d/dx = f^g * (g' * ln(f) + g * f' / f)
@@ -108,17 +109,17 @@ class Dual:
             deriv = val * other.value * self.deriv / self.value if self.value != 0 else 0.0
         return Dual(val, deriv)
 
-    def __rpow__(self, other: Numeric) -> "Dual":
+    def __rpow__(self, other: Numeric) -> Dual:
         other = _as_dual(other)
         return other.__pow__(self)
 
-    def __neg__(self) -> "Dual":
+    def __neg__(self) -> Dual:
         return Dual(-self.value, -self.deriv)
 
-    def __pos__(self) -> "Dual":
+    def __pos__(self) -> Dual:
         return Dual(self.value, self.deriv)
 
-    def __abs__(self) -> "Dual":
+    def __abs__(self) -> Dual:
         if self.value > 0:
             return Dual(self.value, self.deriv)
         elif self.value < 0:
@@ -156,30 +157,30 @@ class Dual:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def sin(x: Numeric) -> "Dual":
+    def sin(x: Numeric) -> Dual:
         x = _as_dual(x)
         return Dual(math.sin(x.value), x.deriv * math.cos(x.value))
 
     @staticmethod
-    def cos(x: Numeric) -> "Dual":
+    def cos(x: Numeric) -> Dual:
         x = _as_dual(x)
         return Dual(math.cos(x.value), -x.deriv * math.sin(x.value))
 
     @staticmethod
-    def exp(x: Numeric) -> "Dual":
+    def exp(x: Numeric) -> Dual:
         x = _as_dual(x)
         e = math.exp(x.value)
         return Dual(e, x.deriv * e)
 
     @staticmethod
-    def log(x: Numeric) -> "Dual":
+    def log(x: Numeric) -> Dual:
         x = _as_dual(x)
         if x.value <= 0:
             raise ValueError("log requires positive value")
         return Dual(math.log(x.value), x.deriv / x.value)
 
     @staticmethod
-    def sqrt(x: Numeric) -> "Dual":
+    def sqrt(x: Numeric) -> Dual:
         x = _as_dual(x)
         if x.value < 0:
             raise ValueError("sqrt requires non-negative value")
@@ -188,19 +189,19 @@ class Dual:
         return Dual(s, deriv)
 
     @staticmethod
-    def tanh(x: Numeric) -> "Dual":
+    def tanh(x: Numeric) -> Dual:
         x = _as_dual(x)
         t = math.tanh(x.value)
         return Dual(t, x.deriv * (1.0 - t * t))
 
     @staticmethod
-    def sigmoid(x: Numeric) -> "Dual":
+    def sigmoid(x: Numeric) -> Dual:
         x = _as_dual(x)
         s = 1.0 / (1.0 + math.exp(-x.value))
         return Dual(s, x.deriv * s * (1.0 - s))
 
     @staticmethod
-    def relu(x: Numeric) -> "Dual":
+    def relu(x: Numeric) -> Dual:
         x = _as_dual(x)
         if x.value > 0:
             return Dual(x.value, x.deriv)

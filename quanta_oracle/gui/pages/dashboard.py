@@ -4,11 +4,16 @@ Quanta Oracle -- Dashboard Page
 Overview stats, quick actions, and library info.
 """
 
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QGridLayout, QScrollArea, QSizePolicy,
-)
 from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QVBoxLayout,
+    QWidget,
+)
 
 from quanta_oracle.gui.app import C, Card, Heading, Stat
 

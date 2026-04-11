@@ -7,12 +7,12 @@ as well as common transformations (differencing, log, Box-Cox).
 
 from __future__ import annotations
 
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 from scipy import stats as sp_stats
 
-ArrayLike = Union[Sequence[float], np.ndarray]
+ArrayLike = Sequence[float] | np.ndarray
 
 
 def _to_array(series: ArrayLike) -> np.ndarray:
@@ -229,7 +229,7 @@ def log_transform(series: ArrayLike) -> np.ndarray:
 
 def box_cox(
     series: ArrayLike,
-    lam: Optional[float] = None,
+    lam: float | None = None,
 ) -> tuple[np.ndarray, float]:
     """Box-Cox power transformation.
 

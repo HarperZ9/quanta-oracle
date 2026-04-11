@@ -5,19 +5,24 @@ Data source selection, model configuration, forecast execution,
 results display with QPainter chart.
 """
 
-import math
-from typing import Optional
 
+from PyQt6.QtCore import QPointF, QRectF, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QPen, QPolygonF
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QSpinBox, QFileDialog, QScrollArea, QSizePolicy,
+    QComboBox,
+    QFileDialog,
     QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QScrollArea,
+    QSizePolicy,
+    QSpinBox,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QRectF, QPointF
-from PyQt6.QtGui import QPainter, QPen, QColor, QLinearGradient, QPolygonF
 
 from quanta_oracle.gui.app import C, Card, Heading, Stat
-
 
 # =============================================================================
 # Forecast Worker Thread
@@ -279,8 +284,8 @@ class ForecastPage(QWidget):
     def __init__(self, main_window=None, parent=None):
         super().__init__(parent)
         self._main_window = main_window
-        self._worker: Optional[ForecastWorker] = None
-        self._csv_path: Optional[str] = None
+        self._worker: ForecastWorker | None = None
+        self._csv_path: str | None = None
 
         scroll = QScrollArea(self)
         scroll.setWidgetResizable(True)

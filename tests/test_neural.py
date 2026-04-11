@@ -2,9 +2,7 @@
 
 import numpy as np
 import pytest
-
 from quanta_oracle.neural import Linear, ReLU, SimpleForecaster
-
 
 # ---------------------------------------------------------------------------
 # Helpers

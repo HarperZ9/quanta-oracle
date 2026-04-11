@@ -4,9 +4,7 @@ import math
 
 import numpy as np
 import pytest
-
 from quanta_oracle.metrics import mae, mape, mase, mse, r_squared, rmse, smape
-
 
 # ---------------------------------------------------------------------------
 # MAE

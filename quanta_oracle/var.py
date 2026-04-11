@@ -11,8 +11,6 @@ lag matrix.
 
 from __future__ import annotations
 
-from typing import Optional
-
 import numpy as np
 
 
@@ -33,10 +31,10 @@ class VAR:
         # Fitted state
         self._fitted = False
         self._k: int = 0                              # number of variables
-        self._coefficients: Optional[np.ndarray] = None  # (Kp+1, K) with intercept
-        self._residuals: Optional[np.ndarray] = None
-        self._sigma: Optional[np.ndarray] = None       # residual covariance
-        self._history: Optional[np.ndarray] = None      # last p rows for prediction
+        self._coefficients: np.ndarray | None = None  # (Kp+1, K) with intercept
+        self._residuals: np.ndarray | None = None
+        self._sigma: np.ndarray | None = None       # residual covariance
+        self._history: np.ndarray | None = None      # last p rows for prediction
 
     # ------------------------------------------------------------------
     # Fitting
@@ -59,7 +57,7 @@ class VAR:
         if data.ndim != 2:
             raise ValueError("data must be a 2-D array of shape (T, K)")
         T, K = data.shape
-        if T < self.p + 1:
+        if self.p + 1 > T:
             raise ValueError(
                 f"Need at least p+1={self.p + 1} observations, got {T}"
             )
@@ -172,7 +170,7 @@ class VAR:
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> "VAR":
+    def _from_state(cls, state: dict) -> VAR:
         """Reconstruct a fitted VAR model from a state dictionary."""
         if state.get("model_type") != "var":
             raise ValueError(
@@ -195,7 +193,7 @@ class VAR:
             json.dump(state, f)
 
     @classmethod
-    def load(cls, path: str) -> "VAR":
+    def load(cls, path: str) -> VAR:
         """Load a previously saved model from *path*."""
         import json
 

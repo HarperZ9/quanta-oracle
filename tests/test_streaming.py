@@ -1,10 +1,7 @@
 """Tests for quanta_oracle.streaming."""
 
 import numpy as np
-import pytest
-
 from quanta_oracle.streaming import StreamConfig, StreamForecaster, StreamUpdate
-
 
 # ---------------------------------------------------------------------------
 # Helpers -- synthetic data generators
@@ -321,7 +318,7 @@ class TestWeightUpdates:
         first_weights = None
         last_weights = None
 
-        for i, v in enumerate(data):
+        for _i, v in enumerate(data):
             result = sf.observe(v)
             if result is not None:
                 if first_weights is None:

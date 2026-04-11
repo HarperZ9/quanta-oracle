@@ -8,11 +8,11 @@ time series using dynamic programming with pruning.
 from __future__ import annotations
 
 import math
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
-ArrayLike = Union[Sequence[float], np.ndarray]
+ArrayLike = Sequence[float] | np.ndarray
 
 
 def _to_array(series: ArrayLike) -> np.ndarray:
@@ -213,7 +213,7 @@ def confidence_scores(
     boundaries = [0] + sorted(changepoints) + [n]
     scores = []
 
-    for i, cp in enumerate(sorted(changepoints)):
+    for _i, cp in enumerate(sorted(changepoints)):
         # Find the two segments adjacent to this changepoint
         seg_idx = boundaries.index(cp)
         left_start = boundaries[seg_idx - 1] if seg_idx > 0 else 0

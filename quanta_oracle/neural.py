@@ -8,10 +8,8 @@ and a lightweight MLP forecaster.
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import numpy as np
-
 
 # ---------------------------------------------------------------------------
 # Weight initialisation helpers
@@ -50,9 +48,9 @@ class Linear:
         self.W = _kaiming_uniform(in_features, out_features)
         self.b = np.zeros(out_features)
         # Cached for backward pass
-        self._input: Optional[np.ndarray] = None
-        self._dW: Optional[np.ndarray] = None
-        self._db: Optional[np.ndarray] = None
+        self._input: np.ndarray | None = None
+        self._dW: np.ndarray | None = None
+        self._db: np.ndarray | None = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         """Compute the linear transformation.
@@ -136,7 +134,7 @@ class ReLU:
     """Rectified Linear Unit activation."""
 
     def __init__(self):
-        self._input: Optional[np.ndarray] = None
+        self._input: np.ndarray | None = None
 
     def forward(self, x: np.ndarray) -> np.ndarray:
         self._input = x
@@ -367,7 +365,7 @@ class SimpleForecaster:
             target_col = series
 
         min_len = self.lookback + self.horizon + 1
-        if T < min_len:
+        if min_len > T:
             raise ValueError(
                 f"Series length ({T}) must be >= "
                 f"lookback + horizon + 1 ({min_len})"
@@ -517,7 +515,7 @@ class SimpleForecaster:
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> "SimpleForecaster":
+    def _from_state(cls, state: dict) -> SimpleForecaster:
         """Reconstruct a SimpleForecaster from a state dictionary."""
         if state.get("model_type") != "neural":
             raise ValueError(
@@ -547,7 +545,7 @@ class SimpleForecaster:
             json.dump(state, f)
 
     @classmethod
-    def load(cls, path: str) -> "SimpleForecaster":
+    def load(cls, path: str) -> SimpleForecaster:
         """Load a previously saved model from *path*."""
         import json
 

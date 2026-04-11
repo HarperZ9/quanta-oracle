@@ -7,11 +7,9 @@ using centered moving averages and period-averaging.
 
 from __future__ import annotations
 
-from typing import Union
-
 import numpy as np
 
-ArrayLike = Union[list, np.ndarray]
+ArrayLike = list | np.ndarray
 
 
 # ---------------------------------------------------------------------------

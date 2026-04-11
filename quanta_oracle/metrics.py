@@ -8,11 +8,11 @@ and return a single float score.
 from __future__ import annotations
 
 import math
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
-ArrayLike = Union[Sequence[float], np.ndarray]
+ArrayLike = Sequence[float] | np.ndarray
 
 
 def _to_arrays(actual: ArrayLike, predicted: ArrayLike) -> tuple[np.ndarray, np.ndarray]:

@@ -8,30 +8,39 @@ page transitions, and the shared Calibrate Pro visual framework.
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-from PyQt6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QFrame, QStackedWidget, QMenuBar, QMenu,
-    QStatusBar, QMessageBox, QFileDialog, QScrollArea,
-    QSizePolicy, QGridLayout, QGroupBox, QProgressBar,
-    QGraphicsDropShadowEffect, QGraphicsOpacityEffect,
-)
 from PyQt6.QtCore import (
-    Qt, QSize, QTimer, pyqtSignal, QSettings,
-    QPropertyAnimation, QEasingCurve, QPoint,
+    QEasingCurve,
+    QPointF,
+    QPropertyAnimation,
+    QSettings,
+    Qt,
 )
 from PyQt6.QtGui import (
-    QAction, QFont, QColor, QIcon, QPixmap, QPainter, QPen,
-    QLinearGradient, QPolygonF, QShortcut, QKeySequence,
+    QAction,
+    QColor,
+    QIcon,
+    QKeySequence,
+    QPainter,
+    QPen,
+    QPixmap,
+    QShortcut,
 )
-from PyQt6.QtCore import QPointF, QRectF
-
-from quanta_ui.theme import C, STYLE
-from quanta_ui.widgets import Card, StatusDot, Heading, Stat, NavButton, Sidebar, ToastNotification
-
+from PyQt6.QtWidgets import (
+    QFileDialog,
+    QGraphicsOpacityEffect,
+    QHBoxLayout,
+    QLabel,
+    QMainWindow,
+    QMessageBox,
+    QStackedWidget,
+    QVBoxLayout,
+    QWidget,
+)
+from quanta_ui.theme import STYLE, C
+from quanta_ui.widgets import Heading, Sidebar, ToastNotification
 
 APP_NAME = "Quanta Oracle"
 APP_VERSION = "1.0.0"
@@ -258,7 +267,7 @@ class QuantaOracleWindow(QMainWindow):
         try:
             from quanta_oracle.gui.pages.dashboard import DashboardPage
             self.stack.addWidget(DashboardPage(main_window=self))
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load DashboardPage: %s", e)
             self.stack.addWidget(PlaceholderPage("Dashboard"))
 
@@ -266,7 +275,7 @@ class QuantaOracleWindow(QMainWindow):
         try:
             from quanta_oracle.gui.pages.forecast_page import ForecastPage
             self.stack.addWidget(ForecastPage(main_window=self))
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load ForecastPage: %s", e)
             self.stack.addWidget(PlaceholderPage("Forecast"))
 
@@ -274,7 +283,7 @@ class QuantaOracleWindow(QMainWindow):
         try:
             from quanta_oracle.gui.pages.decompose_page import DecomposePage
             self.stack.addWidget(DecomposePage(main_window=self))
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load DecomposePage: %s", e)
             self.stack.addWidget(PlaceholderPage("Decompose"))
 
@@ -282,7 +291,7 @@ class QuantaOracleWindow(QMainWindow):
         try:
             from quanta_oracle.gui.pages.changepoint_page import ChangepointPage
             self.stack.addWidget(ChangepointPage(main_window=self))
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load ChangepointPage: %s", e)
             self.stack.addWidget(PlaceholderPage("Changepoints"))
 
@@ -290,7 +299,7 @@ class QuantaOracleWindow(QMainWindow):
         try:
             from quanta_oracle.gui.pages.settings_page import SettingsPage
             self.stack.addWidget(SettingsPage())
-        except Exception as e:
+        except (ImportError, AttributeError, TypeError) as e:
             logger.warning("Failed to load SettingsPage: %s", e)
             self.stack.addWidget(PlaceholderPage("Settings"))
 
@@ -326,7 +335,7 @@ class QuantaOracleWindow(QMainWindow):
                 anim.finished.connect(lambda: target.setGraphicsEffect(None))
                 self._page_anim = anim  # prevent GC
                 anim.start()
-            except Exception:
+            except (AttributeError, RuntimeError):
                 self.stack.setCurrentIndex(index)
         else:
             self.stack.setCurrentIndex(index)

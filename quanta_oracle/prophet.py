@@ -9,11 +9,11 @@ Prophet-style additive time series forecasting model.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
-ArrayLike = Union[Sequence[float], np.ndarray]
+ArrayLike = Sequence[float] | np.ndarray
 
 
 def _to_array(x: ArrayLike) -> np.ndarray:
@@ -131,12 +131,12 @@ class Prophet:
         self._m: float = 0.0                    # base intercept
         self._changepoints: np.ndarray = np.array([])
         self._deltas: np.ndarray = np.array([])
-        self._seasonal_coeffs: Optional[np.ndarray] = None
-        self._regressor_coeffs: Optional[np.ndarray] = None
+        self._seasonal_coeffs: np.ndarray | None = None
+        self._regressor_coeffs: np.ndarray | None = None
         self._n_regressors: int = 0
         self._residual_std: float = 0.0
-        self._t_train: Optional[np.ndarray] = None
-        self._y_train: Optional[np.ndarray] = None
+        self._t_train: np.ndarray | None = None
+        self._y_train: np.ndarray | None = None
 
     # ------------------------------------------------------------------
     # Fitting
@@ -146,8 +146,8 @@ class Prophet:
         self,
         timestamps: ArrayLike,
         values: ArrayLike,
-        regressors: Optional[np.ndarray] = None,
-    ) -> "Prophet":
+        regressors: np.ndarray | None = None,
+    ) -> Prophet:
         """Fit the Prophet model.
 
         Parameters
@@ -266,7 +266,7 @@ class Prophet:
     def predict(
         self,
         future_timestamps: ArrayLike,
-        regressors: Optional[np.ndarray] = None,
+        regressors: np.ndarray | None = None,
     ) -> dict:
         """Generate forecasts for *future_timestamps*.
 
@@ -387,7 +387,7 @@ class Prophet:
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> "Prophet":
+    def _from_state(cls, state: dict) -> Prophet:
         """Reconstruct a fitted Prophet model from a state dictionary."""
         if state.get("model_type") != "prophet":
             raise ValueError(
@@ -430,7 +430,7 @@ class Prophet:
             json.dump(state, f)
 
     @classmethod
-    def load(cls, path: str) -> "Prophet":
+    def load(cls, path: str) -> Prophet:
         """Load a previously saved model from *path*."""
         import json
 

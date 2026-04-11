@@ -8,11 +8,11 @@ grid-search function.
 
 from __future__ import annotations
 
-from typing import Optional, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 
-ArrayLike = Union[Sequence[float], np.ndarray]
+ArrayLike = Sequence[float] | np.ndarray
 
 
 # ---------------------------------------------------------------------------
@@ -140,18 +140,18 @@ class ARIMA:
         self.q = q
 
         # Fitted parameters (populated by .fit())
-        self.phi: Optional[np.ndarray] = None       # AR coefficients
-        self.theta: Optional[np.ndarray] = None      # MA coefficients
+        self.phi: np.ndarray | None = None       # AR coefficients
+        self.theta: np.ndarray | None = None      # MA coefficients
         self.intercept: float = 0.0
         self.sigma2: float = 0.0                     # residual variance
-        self._series: Optional[np.ndarray] = None    # original series
-        self._diff_series: Optional[np.ndarray] = None
-        self._residuals: Optional[np.ndarray] = None
+        self._series: np.ndarray | None = None    # original series
+        self._diff_series: np.ndarray | None = None
+        self._residuals: np.ndarray | None = None
         self._fitted = False
 
     # ----- Fitting --------------------------------------------------------
 
-    def fit(self, series: ArrayLike) -> "ARIMA":
+    def fit(self, series: ArrayLike) -> ARIMA:
         """Fit the ARIMA model to *series*.
 
         Steps:
@@ -294,7 +294,7 @@ class ARIMA:
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> "ARIMA":
+    def _from_state(cls, state: dict) -> ARIMA:
         """Reconstruct a fitted ARIMA model from a state dictionary."""
         if state.get("model_type") != "arima":
             raise ValueError(
@@ -320,7 +320,7 @@ class ARIMA:
             json.dump(state, f)
 
     @classmethod
-    def load(cls, path: str) -> "ARIMA":
+    def load(cls, path: str) -> ARIMA:
         """Load a previously saved model from *path*."""
         import json
 
@@ -354,7 +354,7 @@ def _undo_diff_multi(
     """
     # Build the integration anchors
     levels = [original.copy()]
-    for i in range(d - 1):
+    for _i in range(d - 1):
         levels.append(np.diff(levels[-1]))
 
     result = forecasts.copy()
@@ -391,7 +391,7 @@ def auto_arima(
     """
     y = _to_array(series)
     best_aic = float("inf")
-    best_model: Optional[ARIMA] = None
+    best_model: ARIMA | None = None
 
     for d in range(max_d + 1):
         for p in range(max_p + 1):
