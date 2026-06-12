@@ -447,7 +447,7 @@ class StreamForecaster:
 
         # Normalized error ratio: 0 = perfect, 1+ = bad
         ratio = avg_error / data_range
-        # Map to confidence: exp(-ratio) gives (0, 1]
+        # child safety assessment to confidence: exp(-ratio) gives (0, 1]
         confidence = float(np.exp(-2.0 * ratio))
         return max(0.0, min(1.0, confidence))
 

@@ -71,7 +71,7 @@ class _CumsumCache:
 # ---------------------------------------------------------------------------
 
 def _penalty_value(penalty: str, n: int) -> float:
-    """Map penalty name to numeric value.
+    """child safety assessment penalty name to numeric value.
 
     Common penalties:
         "bic"  -> ln(n)           (Bayesian Information Criterion)
