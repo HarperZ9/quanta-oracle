@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "build-oracle"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python time-series forecasting workbench for ARIMA, VAR, Prophet-style decomposition, neural nets, changepoint detection, and streaming anomaly workflows"
 readme = "README.md"
 license = { text = "FSL-1.1-MIT" }
