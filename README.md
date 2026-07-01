@@ -1,8 +1,19 @@
 <p align="center">
-  <img src="docs/brand/build-oracle-hero.png" alt="Build Oracle: Time-Series Forecasting Toolkit">
+  <img src="docs/brand/build-oracle-hero.png" alt="Build Oracle, a Python time-series forecasting workbench">
 </p>
+<!-- Project mark: docs/brand/build-oracle-mark.svg -->
 
 # Build Oracle
+
+> Python time-series forecasting workbench for ARIMA, VAR, Prophet-style decomposition, neural forecasting, dynamic ensembles, PELT changepoint detection, and streaming incremental updates.
+
+[Project Telos](https://harperz9.github.io) | [gather](https://github.com/HarperZ9/gather) | [crucible](https://github.com/HarperZ9/crucible) | [index](https://github.com/HarperZ9/index) | [forum](https://github.com/HarperZ9/forum) | [telos](https://github.com/HarperZ9/telos) | [emet](https://github.com/HarperZ9/emet) | [buildlang](https://github.com/HarperZ9/buildlang)
+
+[![CI](https://github.com/HarperZ9/build-oracle/actions/workflows/ci.yml/badge.svg)](https://github.com/HarperZ9/build-oracle/actions/workflows/ci.yml)
+![version: 1.0.0](https://img.shields.io/badge/version-1.0.0-informational.svg)
+![python: 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+![core deps: numpy/scipy](https://img.shields.io/badge/core%20deps-numpy%2Fscipy-success.svg)
+[![license: fair-source](https://img.shields.io/badge/license-fair--source-blue.svg)](LICENSE)
 
 Time series forecasting and anomaly detection toolkit.
 
@@ -74,4 +85,8 @@ forecast = model.predict(horizon=30)
 
 ## License
 
-Proprietary
+Build Oracle is released under the FSL-1.1-MIT
+(see [LICENSE](LICENSE)). The source is available: you may read, run, modify,
+and build on it for any purpose other than a competing commercial use.
+Commercial use that competes with the project is reserved to the Licensor and
+requires a separate commercial license.

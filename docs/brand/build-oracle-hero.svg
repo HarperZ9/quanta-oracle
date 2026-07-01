@@ -1,0 +1,27 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Build Oracle, a Python time-series forecasting workbench">
+  <defs>
+    <linearGradient id="hero-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#160c28"/>
+      <stop offset="1" stop-color="#0a0816"/>
+    </linearGradient>
+    <linearGradient id="forecast-line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4636e8"/>
+      <stop offset="1" stop-color="#4d8bff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#hero-bg)"/>
+  <!-- observed series -->
+  <polyline points="80,260 160,235 240,270 320,210 400,240 480,190 560,225"
+            fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>
+  <!-- forecast continuation -->
+  <polyline points="560,225 640,175 720,195 800,140 880,165 960,110 1040,130"
+            fill="none" stroke="url(#forecast-line)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 14"/>
+  <!-- confidence band around the forecast -->
+  <polygon points="560,225 640,150 720,170 800,110 880,140 960,80 1040,100 1040,165 960,145 880,190 800,170 720,225 640,205 560,225"
+           fill="#4636e8" opacity="0.16"/>
+  <!-- changepoint markers -->
+  <circle cx="320" cy="210" r="8" fill="#38d39f"/>
+  <circle cx="1040" cy="130" r="8" fill="#ff4d6d"/>
+  <text x="80" y="130" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="72" font-weight="700" fill="#ffffff">Build Oracle</text>
+  <text x="82" y="180" font-family="Segoe UI, Helvetica, Arial, sans-serif" font-size="26" fill="#b8b0d8">A Python forecasting workbench — ARIMA, VAR, Prophet-style, neural, ensemble, changepoints, streaming.</text>
+</svg>

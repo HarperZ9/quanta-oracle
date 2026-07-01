@@ -9,8 +9,20 @@ on recent data get higher weight in the ensemble prediction.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Protocol
 
 import numpy as np
+
+
+class _SubModel(Protocol):
+    """Structural type for the heterogeneous sub-models an ensemble may hold.
+
+    ARIMA, Prophet, and SimpleForecaster each expose a ``predict`` method
+    with a model-specific signature/return type, so this Protocol only
+    pins down the common calling shape used via ``_predict_single``.
+    """
+
+    def predict(self, x: Any) -> Any: ...
 
 
 @dataclass
@@ -43,9 +55,9 @@ class EnsembleForecaster:
     get higher weight.
     """
 
-    def __init__(self, config: EnsembleConfig = None):
+    def __init__(self, config: EnsembleConfig | None = None):
         self._config = config or EnsembleConfig()
-        self._models: dict[str, object] = {}
+        self._models: dict[str, _SubModel] = {}
         self._weights: np.ndarray = np.array([])
         self._model_names: list[str] = []
         self._model_mae: dict[str, float] = {}
@@ -244,14 +256,16 @@ class EnsembleForecaster:
         """Dispatch prediction to the named sub-model."""
         model = self._models[name]
         if name == "arima":
-            return model.predict(steps)
+            return np.asarray(model.predict(steps), dtype=np.float64)
         elif name == "prophet":
+            assert self._training_data is not None
             n_train = len(self._training_data) - self._config.validation_window
             t_future = np.arange(n_train, n_train + steps, dtype=np.float64)
             result = model.predict(t_future)
-            return result["yhat"]
+            return np.asarray(result["yhat"], dtype=np.float64)
         elif name == "neural":
-            return model.predict(self._training_data)
+            assert self._training_data is not None
+            return np.asarray(model.predict(self._training_data), dtype=np.float64)
         else:
             raise ValueError(f"Unknown model: {name}")
 
@@ -307,12 +321,12 @@ class EnsembleForecaster:
     # ----- Properties -----------------------------------------------------
 
     @property
-    def weights(self) -> dict:
+    def weights(self) -> dict[str, float]:
         """Current model weights as a dict."""
         return {name: float(self._weights[i]) for i, name in enumerate(self._model_names)}
 
     @property
-    def model_errors(self) -> dict:
+    def model_errors(self) -> dict[str, float]:
         """Individual model MAE on validation window."""
         return dict(self._model_mae)
 
@@ -323,7 +337,7 @@ class EnsembleForecaster:
 
     # ----- Persistence ----------------------------------------------------
 
-    def _get_state(self) -> dict:
+    def _get_state(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary of fitted state."""
         if not self._fitted:
             raise RuntimeError("Model has not been fitted yet")

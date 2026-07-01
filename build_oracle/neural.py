@@ -8,8 +8,11 @@ and a lightweight MLP forecaster.
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
+
+JSONDict = dict[str, Any]
 
 # ---------------------------------------------------------------------------
 # Weight initialisation helpers
@@ -80,9 +83,18 @@ class Linear:
         -------
         (..., in_features) array — gradient w.r.t. this layer's input.
         """
+        if self._input is None:
+            raise RuntimeError("forward() must be called before _backward()")
         self._dW = self._input.T @ d_output
         self._db = d_output.sum(axis=0)
         return d_output @ self.W.T
+
+    def sgd_step(self, lr: float) -> None:
+        """Apply a gradient-descent update using the last computed gradients."""
+        if self._dW is None or self._db is None:
+            raise RuntimeError("_backward() must be called before sgd_step()")
+        self.W -= lr * self._dW
+        self.b -= lr * self._db
 
     def parameters(self) -> list[np.ndarray]:
         """Return a list of trainable parameter arrays [W, b]."""
@@ -146,6 +158,8 @@ class ReLU:
 
     def _backward(self, d_output: np.ndarray) -> np.ndarray:
         """Mask gradient where input was <= 0."""
+        if self._input is None:
+            raise RuntimeError("forward() must be called before _backward()")
         return d_output * (self._input > 0)
 
     def __repr__(self) -> str:
@@ -423,10 +437,8 @@ class SimpleForecaster:
             self.layer1._backward(d_z)
 
             # SGD update -------------------------------------------------------
-            self.layer2.W -= lr * self.layer2._dW
-            self.layer2.b -= lr * self.layer2._db
-            self.layer1.W -= lr * self.layer1._dW
-            self.layer1.b -= lr * self.layer1._db
+            self.layer2.sgd_step(lr)
+            self.layer1.sgd_step(lr)
 
             if epoch % 20 == 0 or epoch == epochs - 1:
                 print(f"Epoch {epoch:4d}/{epochs}  loss={loss:.6f}")

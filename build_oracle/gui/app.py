@@ -11,6 +11,8 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+from build_ui.theme import STYLE, C
+from build_ui.widgets import Heading, Sidebar, ToastNotification
 from PyQt6.QtCore import (
     QEasingCurve,
     QPointF,
@@ -39,8 +41,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from build_ui.theme import STYLE, C
-from build_ui.widgets import Heading, Sidebar, ToastNotification
 
 APP_NAME = "Build Oracle"
 APP_VERSION = "1.0.0"

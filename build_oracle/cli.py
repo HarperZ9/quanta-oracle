@@ -12,6 +12,7 @@ Commands:
 import argparse
 import math
 import sys
+from typing import Any
 
 # =============================================================================
 # Sample Data Generation
@@ -94,6 +95,8 @@ def generate_sample_series(
 def _cmd_forecast(args: argparse.Namespace) -> None:
     """Run ARIMA or Prophet forecast and print results."""
     import numpy as np
+
+    model: Any  # holds whichever forecaster type this command selects
 
     # ---- Load from saved model file ------------------------------------
     if args.load:

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 import numpy as np
 
@@ -70,7 +71,7 @@ class StreamForecaster:
                 print(f"Next prediction: {update.next_predictions[0]}")
     """
 
-    def __init__(self, config: StreamConfig = None):
+    def __init__(self, config: StreamConfig | None = None):
         self.config = config or StreamConfig()
         self._history: list[float] = []
         self._predictions: dict[str, np.ndarray] = {}
@@ -78,14 +79,14 @@ class StreamForecaster:
         self._weights: dict[str, float] = {}
         self._fitted = False
         self._update_count = 0
-        self._models: dict[str, object] = {}
+        self._models: dict[str, Any] = {}
         self._last_prediction: float | None = None
         self._refit_count = 0
 
     def observe(
         self,
         value: float,
-        timestamp: datetime = None,
+        timestamp: datetime | None = None,
     ) -> StreamUpdate | None:
         """
         Process a new observation. Returns StreamUpdate if enough
@@ -168,6 +169,7 @@ class StreamForecaster:
         cfg = self.config
 
         for name in cfg.models:
+            model: Any
             try:
                 if name == "arima":
                     model = ARIMA(p=cfg.arima_p, d=cfg.arima_d, q=cfg.arima_q)
@@ -243,7 +245,9 @@ class StreamForecaster:
                 elif name == "prophet":
                     # Refit trend only, keeping seasonality coefficients
                     model = self._models[name]
-                    t = np.arange(len(data), dtype=np.float64)
+                    # `t` is an int index in the ARIMA branch above; here it is a float grid.
+                    # The branches are mutually exclusive, which mypy's scope narrowing can't see.
+                    t = np.arange(len(data), dtype=np.float64)  # type: ignore[assignment]
                     saved_seasonal = model._seasonal_coeffs.copy() if model._seasonal_coeffs is not None else None
                     # Quick trend refit via least-squares on residuals
                     n = len(data)

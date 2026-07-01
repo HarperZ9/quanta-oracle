@@ -9,6 +9,7 @@ grid-search function.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import numpy as np
 
@@ -216,10 +217,14 @@ class ARIMA:
         MA residuals beyond the known range are set to 0 (expectation).
         Then undoes differencing to return forecasts on the original scale.
         """
-        if not self._fitted:
-            raise RuntimeError("Model has not been fitted yet")
+        self._check_fitted()
         if horizon < 1:
             raise ValueError("horizon must be >= 1")
+        assert self._diff_series is not None
+        assert self._residuals is not None
+        assert self._series is not None
+        assert self.phi is not None
+        assert self.theta is not None
 
         z = self._diff_series.copy()
         z_centered = z - self.intercept
@@ -258,6 +263,7 @@ class ARIMA:
         AIC = n * ln(sigma2) + 2 * (p + q + 1)
         """
         self._check_fitted()
+        assert self._diff_series is not None
         n = len(self._diff_series)
         k = self.p + self.q + 1
         s2 = max(self.sigma2, 1e-300)
@@ -269,6 +275,7 @@ class ARIMA:
         BIC = n * ln(sigma2) + (p + q + 1) * ln(n)
         """
         self._check_fitted()
+        assert self._diff_series is not None
         n = len(self._diff_series)
         k = self.p + self.q + 1
         s2 = max(self.sigma2, 1e-300)
@@ -276,7 +283,7 @@ class ARIMA:
 
     # ----- Persistence ---------------------------------------------------
 
-    def _get_state(self) -> dict:
+    def _get_state(self) -> dict[str, Any]:
         """Return a JSON-serializable dictionary of fitted model state."""
         self._check_fitted()
         return {
@@ -294,7 +301,7 @@ class ARIMA:
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> ARIMA:
+    def _from_state(cls, state: dict[str, Any]) -> ARIMA:
         """Reconstruct a fitted ARIMA model from a state dictionary."""
         if state.get("model_type") != "arima":
             raise ValueError(f"Expected model_type 'arima', got '{state.get('model_type')}'")
@@ -328,7 +335,7 @@ class ARIMA:
 
     # ----- Internals ------------------------------------------------------
 
-    def _check_fitted(self):
+    def _check_fitted(self) -> None:
         if not self._fitted:
             raise RuntimeError("Model has not been fitted yet")
 

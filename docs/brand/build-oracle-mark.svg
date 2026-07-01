@@ -1,0 +1,22 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Build Oracle mark">
+  <defs>
+    <linearGradient id="bo-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1b1030"/>
+      <stop offset="1" stop-color="#0c0a1a"/>
+    </linearGradient>
+    <linearGradient id="bo-forecast" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4636e8"/>
+      <stop offset="1" stop-color="#4d8bff"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="26" fill="url(#bo-bg)"/>
+  <!-- observed series -->
+  <polyline points="20,80 34,72 48,86 62,64 76,70" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <!-- forecast continuation (dashed) -->
+  <polyline points="76,70 90,52 104,58 112,40" fill="none" stroke="url(#bo-forecast)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1 9"/>
+  <!-- confidence band -->
+  <polygon points="76,70 90,44 104,50 112,26 112,54 104,66 90,60 76,70" fill="#4636e8" opacity="0.18"/>
+  <!-- changepoint marker -->
+  <circle cx="62" cy="64" r="5.5" fill="#38d39f"/>
+  <circle cx="112" cy="40" r="5.5" fill="#ff4d6d"/>
+</svg>

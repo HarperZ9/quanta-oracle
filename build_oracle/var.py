@@ -11,7 +11,11 @@ lag matrix.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
+
+JSONDict = dict[str, Any]
 
 
 class VAR:
@@ -35,6 +39,18 @@ class VAR:
         self._residuals: np.ndarray | None = None
         self._sigma: np.ndarray | None = None  # residual covariance
         self._history: np.ndarray | None = None  # last p rows for prediction
+
+    def _require_fitted(self) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return (coefficients, residuals, sigma, history), raising if unfitted."""
+        if (
+            not self._fitted
+            or self._coefficients is None
+            or self._residuals is None
+            or self._sigma is None
+            or self._history is None
+        ):
+            raise RuntimeError("Model has not been fitted yet")
+        return self._coefficients, self._residuals, self._sigma, self._history
 
     # ------------------------------------------------------------------
     # Fitting
@@ -110,16 +126,14 @@ class VAR:
         -------
         (horizon, K) array of forecasted values.
         """
-        if not self._fitted:
-            raise RuntimeError("Model has not been fitted yet")
         if horizon < 1:
             raise ValueError("horizon must be >= 1")
+        coeffs, _residuals, _sigma, history = self._require_fitted()
 
         K = self._k
-        coeffs = self._coefficients  # (Kp+1, K)
 
         # Extend history with predictions
-        extended = np.vstack([self._history.copy(), np.zeros((horizon, K))])
+        extended = np.vstack([history.copy(), np.zeros((horizon, K))])
         p = self.p
 
         for h in range(horizon):
@@ -139,44 +153,45 @@ class VAR:
     @property
     def residuals(self) -> np.ndarray:
         """Return fitted residuals as (T-p, K) array."""
-        if not self._fitted:
-            raise RuntimeError("Model has not been fitted yet")
-        return self._residuals.copy()
+        _coeffs, residuals, _sigma, _history = self._require_fitted()
+        return residuals.copy()
 
     @property
     def sigma(self) -> np.ndarray:
         """Return residual covariance matrix (K, K)."""
-        if not self._fitted:
-            raise RuntimeError("Model has not been fitted yet")
-        return self._sigma.copy()
+        _coeffs, _residuals, sigma, _history = self._require_fitted()
+        return sigma.copy()
 
     # ------------------------------------------------------------------
     # Persistence
     # ------------------------------------------------------------------
 
-    def _get_state(self) -> dict:
+    def _get_state(self) -> JSONDict:
         """Return a JSON-serializable dictionary of fitted model state."""
-        if not self._fitted:
-            raise RuntimeError("Model has not been fitted yet")
+        coeffs, _residuals, sigma, history = self._require_fitted()
         return {
             "model_type": "var",
             "p": self.p,
             "k": self._k,
-            "coefficients": self._coefficients.tolist(),
-            "sigma": self._sigma.tolist(),
-            "history": self._history.tolist(),
+            "coefficients": coeffs.tolist(),
+            "sigma": sigma.tolist(),
+            "history": history.tolist(),
         }
 
     @classmethod
-    def _from_state(cls, state: dict) -> VAR:
+    def _from_state(cls, state: JSONDict) -> VAR:
         """Reconstruct a fitted VAR model from a state dictionary."""
         if state.get("model_type") != "var":
             raise ValueError(f"Expected model_type 'var', got '{state.get('model_type')}'")
-        obj = cls(p=state["p"])
+        obj = cls(p=int(state["p"]))
         obj._k = int(state["k"])
         obj._coefficients = np.array(state["coefficients"], dtype=np.float64)
         obj._sigma = np.array(state["sigma"], dtype=np.float64)
         obj._history = np.array(state["history"], dtype=np.float64)
+        # Residuals are not persisted (only needed for in-session diagnostics),
+        # but _require_fitted() checks all fitted-state fields for None, so we
+        # restore a zero-shaped placeholder consistent with the saved shapes.
+        obj._residuals = np.zeros((0, obj._k), dtype=np.float64)
         obj._fitted = True
         return obj
 
