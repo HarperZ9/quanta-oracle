@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/brand/build-oracle-hero.png" alt="Build Oracle: Time-Series Forecasting Toolkit">
+</p>
+
 # Build Oracle
 
 Time series forecasting and anomaly detection toolkit.
@@ -45,7 +49,7 @@ build-oracle gui
 ### Python API
 
 ```python
-from build_oracle.models.arima import ARIMAModel
+from build_oracle.arima import ARIMAModel
 
 model = ARIMAModel(order=(2, 1, 1))
 model.fit(training_data)
